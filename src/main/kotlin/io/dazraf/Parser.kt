@@ -4,14 +4,16 @@ import java.io.File
 
 private val re = Regex("^(.+) reviews (.+)$")
 
-fun String.parse() : Reviews {
-  val pairs = File(this).readLines()
+fun String.parseFile() : Reviews  = File(this).parseFile()
+
+fun File.parseFile() : Reviews {
+  val pairs = this.readLines()
     .mapIndexed(::parseLine)
-    .filter { it != null}
-    .map { it as Pair<String, String>}
+    .filterNotNull()
     .toList()
   return Reviews(pairs)
 }
+
 
 private fun parseLine(index: Int, line: String): Pair<String, String>? {
   val mr = re.matchEntire(line)?.groups

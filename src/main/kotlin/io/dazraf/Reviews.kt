@@ -8,25 +8,17 @@ package io.dazraf
 class Reviews(private val pairs: Iterable<Pair<String, String>>) {
 
   // build a map of all reviewers to a list of their respective reviewees ...
-  private val reviews = pairs.groupByTo(
-    destination = mutableMapOf(),
-    keySelector = { it.first },
-    valueTransform = { it.second })
+  private val reviews = pairs.groupByTo(mutableMapOf(), { it.first }, { it.second })
 
-  // and those that are not being reviewed ...
-  private val unreachable: Iterable<String>
+  // build a set of nodes we can reach and ...
+  private val reachable = pairs.map { it.second }.distinct().toHashSet()
 
-  /**
-   * explicit constructor because we have some work to do
-   */
-  init {
-    // build a set of nodes we can reach and ...
-    val reachable = pairs.map { it.second }.distinct().toHashSet()
+  // ... use these to identify those we can't reach
+  private val unreachable = pairs.filter { !reachable.contains(it.first) }.map { it.first }.distinct()
 
-    // ... use these to identify those we can't reach
-    unreachable = pairs.filter { !reachable.contains(it.first) }.map { it.first }.distinct()
-    validate()
-  }
+  init { validate() }
+
+  // -- to string --
 
   override fun toString(): String {
     val sb = StringBuilder()
@@ -34,44 +26,50 @@ class Reviews(private val pairs: Iterable<Pair<String, String>>) {
     return sb.toString()
   }
 
-
   private fun StringBuilder.print(prefix: String, name: String, tail: Boolean) {
-    appendln(prefix + (if (tail) "└── " else "├── ") + name)
-
+    appendln(prefix + (if (tail) "└─ " else "├─ ") + name)
     val children = reviews[name]
-
     children?.forEachIndexed { index, child ->
-      print(prefix + (if (tail) "    " else "│   "), child, index == children.size - 1)
+      print(prefix + (if (tail) "   " else "│  "), child, index == children.size - 1)
     }
   }
 
-  @Throws(CycleDetectedException::class, IllegalStateException::class)
+  // -- validation logic --
+
   private fun validate() {
     // we need at least one entry point
-    if (unreachable.count() == 0) {
-      throw CycleDetectedException("no unreachable nodes - graph is either empty or cyclic")
-    }
+    validate_entryPoints()
 
     // check that each reviewee has one and only one reviewer
+    validate_onReviewerPerReviewee()
+
+    // depth-first search
+    validate_dag()
+  }
+
+  private fun validate_onReviewerPerReviewee() {
     pairs.groupByTo(mutableMapOf(), { it.second }, { it.first }).forEach {
       if (it.value.size > 1) {
         throw IllegalStateException("${it.key} is set to be reviewed by ${it.value}")
       }
     }
+  }
 
-    // DFS
-    val visited = mutableSetOf<String>()
-    unreachable.forEach {
-      validate(it, visited)
+  private fun validate_entryPoints() {
+    if (unreachable.count() == 0) {
+      throw IllegalStateException("no unreachable nodes - graph is either empty or cyclic")
     }
   }
 
-  private fun validate(name: String, visited: MutableSet<String>) {
+  private fun validate_dag() {
+    val visited = mutableSetOf<String>()
+    unreachable.forEach { validate_dag(it, visited) }
+  }
+
+  private fun validate_dag(name: String, visited: MutableSet<String>) {
     if (visited.contains(name)) {
-      throw CycleDetectedException("cycle found with coder $name")
+      throw IllegalStateException("cycle found with coder $name")
     }
-    reviews[name]?.forEach { validate(it, visited) }
+    reviews[name]?.forEach { validate_dag(it, visited) }
   }
 }
-
-class CycleDetectedException(msg: String) : IllegalStateException(msg)

@@ -3,7 +3,6 @@ package io.dazraf
 import org.junit.Test
 
 class Tests {
-
   @Test
   fun testHappyPath() {
     val str = Reviews(listOf(
@@ -14,12 +13,12 @@ class Tests {
     )).toString()
   }
 
-  @Test(expected = CycleDetectedException::class)
+  @Test(expected = IllegalStateException::class)
   fun testThatEmptySetFails() {
     Reviews(listOf())
   }
 
-  @Test(expected = CycleDetectedException::class)
+  @Test(expected = IllegalStateException::class)
   fun testThatCycleIsDetected() {
     Reviews(listOf(
       "a" to "b",
@@ -35,5 +34,4 @@ class Tests {
       "b" to "c"
     ))
   }
-
 }
