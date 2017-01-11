@@ -22,15 +22,15 @@ class Reviews(private val pairs: Iterable<Pair<String, String>>) {
 
   override fun toString(): String {
     val sb = StringBuilder()
-    unreachable.forEach { sb.print(prefix = "", name = it, tail = true) }
+    unreachable.forEach { sb.print(prefix = "", name = it, isLast = true) }
     return sb.toString()
   }
 
-  private fun StringBuilder.print(prefix: String, name: String, tail: Boolean) {
-    appendln(prefix + (if (tail) "└─ " else "├─ ") + name)
+  private fun StringBuilder.print(prefix: String, name: String, isLast: Boolean) {
+    appendln(prefix + (if (isLast) "└─ " else "├─ ") + name)
     val children = reviews[name]
     children?.forEachIndexed { index, child ->
-      print(prefix + (if (tail) "   " else "│  "), child, index == children.size - 1)
+      print(prefix + (if (isLast) "   " else "│  "), child, index == children.size - 1)
     }
   }
 
