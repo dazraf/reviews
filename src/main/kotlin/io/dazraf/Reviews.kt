@@ -8,7 +8,10 @@ package io.dazraf
 class Reviews(private val pairs: Iterable<Pair<String, String>>) {
 
   // build a map of all reviewers to a list of their respective reviewees ...
-  private val reviews = pairs.groupByTo(mutableMapOf(), { it.first }, { it.second })
+  private val reviews = pairs.groupByTo(
+    destination = mutableMapOf(),
+    keySelector = { it.first },
+    valueTransform = { it.second })
 
   // and those that are not being reviewed ...
   private val unreachable: Iterable<String>
@@ -42,11 +45,11 @@ class Reviews(private val pairs: Iterable<Pair<String, String>>) {
     }
   }
 
-  @Throws(CycleDetectedException::class, EmptyException::class, IllegalStateException::class)
+  @Throws(CycleDetectedException::class, IllegalStateException::class)
   private fun validate() {
     // we need at least one entry point
     if (unreachable.count() == 0) {
-      throw EmptyException()
+      throw CycleDetectedException("no unreachable nodes - graph is either empty or cyclic")
     }
 
     // check that each reviewee has one and only one reviewer
@@ -72,4 +75,3 @@ class Reviews(private val pairs: Iterable<Pair<String, String>>) {
 }
 
 class CycleDetectedException(msg: String) : IllegalStateException(msg)
-class EmptyException : IllegalStateException("no entry points into the graph - graph is cyclic or empty")

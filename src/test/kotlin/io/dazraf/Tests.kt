@@ -14,7 +14,7 @@ class Tests {
     )).toString()
   }
 
-  @Test(expected = EmptyException::class)
+  @Test(expected = CycleDetectedException::class)
   fun testThatEmptySetFails() {
     Reviews(listOf())
   }
