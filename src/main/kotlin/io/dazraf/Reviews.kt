@@ -1,7 +1,9 @@
 package io.dazraf
 
 /**
- * A simple class to walk the list of reviews and print them to stdout
+ * A simple class to hold a representation of the specialised graph for reviewers and reviewees
+ * Validates
+ * Can dump graph to string
  */
 class Reviews(private val pairs: Iterable<Pair<String, String>>) {
 
@@ -27,6 +29,17 @@ class Reviews(private val pairs: Iterable<Pair<String, String>>) {
     val sb = StringBuilder()
     unreachable.forEach { sb.print(prefix = "", name = it, tail = true) }
     return sb.toString()
+  }
+
+
+  private fun StringBuilder.print(prefix: String, name: String, tail: Boolean) {
+    appendln(prefix + (if (tail) "└── " else "├── ") + name)
+
+    val children = reviews[name]
+
+    children?.forEachIndexed { index, child ->
+      print(prefix + (if (tail) "    " else "│   "), child, index == children.size - 1)
+    }
   }
 
   @Throws(CycleDetectedException::class, EmptyException::class, IllegalStateException::class)
@@ -55,17 +68,6 @@ class Reviews(private val pairs: Iterable<Pair<String, String>>) {
       throw CycleDetectedException("cycle found with coder $name")
     }
     reviews[name]?.forEach { validate(it, visited) }
-  }
-
-
-  private fun StringBuilder.print(prefix: String, name: String, tail: Boolean) {
-    appendln(prefix + (if (tail) "└── " else "├── ") + name)
-
-    val children = reviews[name]
-
-    children?.forEachIndexed { index, child ->
-      print(prefix + (if (tail) "    " else "│   "), child, index == children.size - 1)
-    }
   }
 }
 
