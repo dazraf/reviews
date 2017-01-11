@@ -14,7 +14,6 @@ fun File.parseFile() : Reviews {
   return Reviews(pairs)
 }
 
-
 private fun parseLine(index: Int, line: String): Pair<String, String>? {
   val mr = re.matchEntire(line)?.groups
   if (mr?.size != 3) {
